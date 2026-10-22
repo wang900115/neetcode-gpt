@@ -1,37 +1,32 @@
 import torch
 import torch.nn as nn
 from torchtyping import TensorType
+from typing import List
 
-# torch.tensor(python_list) returns a Python list as a tensor
 class Solution:
     def get_dataset(self, positive: List[str], negative: List[str]) -> TensorType[float]:
-        vocabulary = set()
-        for sentence in positive:
-            for word in sentence.split():
-                vocabulary.add(word)
-        
-        for sentence in negative:
-            for word in sentence.split():
-                vocabulary.add(word)
-        
-        
-        sorted_list = sorted(list(vocabulary))
-        word_to_int = {}
-        for i in range(len(sorted_list)):
-            word_to_int[sorted_list[i]] = i + 1
-        
-        tensors = []
-        for sentence in positive:
-            curr_list = []
-            for word in sentence.split():
-                curr_list.append(word_to_int[word])
-            tensors.append(torch.tensor(curr_list))
-        
-        for sentence in negative:
-            curr_list = []
-            for word in sentence.split():
-                curr_list.append(word_to_int[word])
-            tensors.append(torch.tensor(curr_list))
+        # 1. Build vocabulary: collect all unique words, sort them, assign integer IDs starting at 1
+        vocab = sorted(set(
+            word
+            for sentence in positive+negative
+            for word in sentence.split()
+        ))
 
-        return nn.utils.rnn.pad_sequence(tensors,batch_first=True)
-            
+        word_to_id = {
+            word: idx +1 
+            for idx, word in enumerate(vocab)
+        }
+        # 2. Encode each sentence by replacing words with their IDs
+        tensors = []
+        for sentence in positive + negative:
+            ids = [word_to_id[word] for word in sentence.split()]
+            tensors.append(torch.tensor(ids,dtype=torch.long))
+        # 3. Combine positive + negative into one list of tensors
+        # 4. Pad shorter sequences with 0s using nn.utils.rnn.pad_sequence(tensors, batch_first=True)
+        result = nn.utils.rnn.pad_sequence(
+            tensors,
+            batch_first = True,
+            padding_value = 0
+        )
+        
+        return result
