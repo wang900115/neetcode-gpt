@@ -9,7 +9,6 @@ class GPT(nn.Module):
     def __init__(self, vocab_size: int, context_length: int, model_dim: int, num_blocks: int, num_heads: int):
         super().__init__()
         torch.manual_seed(0)
-        # Hint: nn.Sequential() will be useful for the block sequence
         # word embeddings
         self.token_embedding = nn.Embedding(
             vocab_size,
@@ -20,16 +19,17 @@ class GPT(nn.Module):
             context_length,
             model_dim
         )
-
+        # transformer_blocks
         self.transformer_blocks = nn.Sequential(
             *[
                 self.TransformerBlock(model_dim, num_heads)
                 for _ in range(num_blocks)
             ]
         )
-
+        # norm 
         self.final_layer_norm = nn.LayerNorm(model_dim)
 
+        # v
         self.vocab_projection = nn.Linear(
             model_dim,
             vocab_size
@@ -38,7 +38,7 @@ class GPT(nn.Module):
     def forward(self, context: TensorType[int]) -> TensorType[float]:
         torch.manual_seed(0)
 
-        # 1. Token Embeddings + Position Embeddings
+        # Token Embeddings + Position Embeddings
         batch_size, context_length = context.shape
 
         token_emb = self.token_embedding(context)
@@ -52,16 +52,16 @@ class GPT(nn.Module):
 
         embedded = token_emb + position_emb
 
-        # 2. Transformer Blocks
+        # Transformer Blocks
         embedded = self.transformer_blocks(embedded)
 
-        # 3. Final LayerNorm
+        # Final LayerNorm
         embedded = self.final_layer_norm(embedded)
 
-        # 4. Vocabulary Projection
+        # Vocabulary Projection
         logits = self.vocab_projection(embedded)
 
-        # 5. Round to 4 decimal places
+        # Round to 4 decimal places
         logits = torch.round(logits * 10000) / 10000
 
         return logits
