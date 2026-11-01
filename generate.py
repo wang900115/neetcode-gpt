@@ -14,30 +14,26 @@ class Solution:
         generator = torch.manual_seed(0)
         initial_state = generator.get_state()
         for i in range(new_chars):
-
-            # YOUR CODE (arbitrary number of lines)
-            # crop context
+            # 1. crop context
             context = context[:, -context_length:]
-            # get the last position's logits
+            # 2. get the last position's logits
             logits = model(context)
             logits = logits[:,-1,:]
-            # covert logits into probabilities
+            # 3. covert logits into probabilities
             probs = torch.softmax(logits, dim = -1)
             # The line where you call torch.multinomial(). Pass in the generator as well.
             generator.set_state(initial_state)
-            # sample next token 
+            # 4. sample next token 
             next_token = torch.multinomial(
                 probs,
                 1,
                 generator=generator
             )
-            # append token to context
+            # 5. append token to context
             context = torch.cat(
                 [context, next_token],
                 dim = 1
             )
-
             result += int_to_char[next_token.item()]
-            # MORE OF YOUR CODE (arbitrary number of lines)
         return result
         # Once your code passes the test, check out the Colab link to see your code generate new Drake lyrics!
